@@ -33,7 +33,7 @@ def extract_content(Response, content_name='image'):
     
         if 'Content-Encoding' in Response.header:
             if Response.header['Content-Encoding'] == "gzip":
-                content = zlib.decompress(Response.payload, zlib.MAX_WBITS | 32)
+                content = zlib.decompress(Response.payload, zlib.MAX_WBITS | 32) # ATTENTION! payload or content?
             elif Response.header['Content-Encoding'] == "deflate":
                 content = zlib.decompress(Response.payload)
         
@@ -41,12 +41,35 @@ def extract_content(Response, content_name='image'):
 
 class Recapper:
     def __init__(self, fname):
-        pass
-    def get_responses(self):
-        pass
-    def write(self, content_name):
-        pass
+        pcap = rdpcap(fname)                                                    # Reads packets from a saved capture file(.pcap) into a Python program.
+        self.sessions = pcap.sessions()
+        self.responses = list()
 
+    def get_responses(self):
+        for session in self.sessions:
+            payload = b''
+            for packet in self.sessions[session]:
+                try:
+                    if packet[TCP].dport == 80 or packet[TCP].sport == 80:
+                        payload += bytes(packet[TCP].payload)
+                except IndexError:
+                    sys.stdout.write('x')
+                    sys.stdout.flush
+        
+            if payload:
+                header = get_header(payload)
+                if header is None:
+                    continue
+                self.responses.append(Response(header=header, payload=payload))
+
+    def write(self, content_name):
+        for i, response in enumerate(self.responses):
+            content, content_type = extract_content(response, content_name)
+            if content and content_type:
+                fname = os.path.join(OUTDIR, f'ex_{i}.{content_type}')
+                print(f'Writing {fname}')
+                with open(fname, 'wb') as f:
+                    f.write(content)
 
 if __name__ == '__main__':
     pfile = os.path.join(PCAPS, 'pcap.pcap')
