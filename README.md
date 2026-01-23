@@ -20,6 +20,10 @@ wget https://eclecti.cc/files/2008/03/haarcascade_frontalface_alt.xml
 # or
 wget https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalface_alt.xml
 ```
+#### Or on Kali, OpenCV cascades are often pre-installed here:
+```bash
+/usr/share/opencv4/haarcascades
+```
 ### 1.3 Create 3 folders on Desktop: 
 ```markdown
 faces - for final result; 
@@ -59,6 +63,10 @@ sudo python recapper.py
  [!] SUCCESSFULLY WROTE: /home/kali/Desktop/pictures/ex_4.jpeg
 ```
 
+### Check the extracted images:
+![images]()
+
+
 ## 4. Detect faces in the newfound images:
 ```bash
 python detector.py      
@@ -66,3 +74,5 @@ python detector.py
  [+] Found face in ex_0.jpeg!
 [*] Detection complete. Found 1 faces.
 ```                                
+### Check the result:
+![face]()
