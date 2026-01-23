@@ -64,7 +64,7 @@ sudo python recapper.py
 ```
 
 ### Check the extracted images:
-![images]()
+![images](https://raw.githubusercontent.com/Zauzanov/pcap-analyzer/refs/heads/main/s01.png)
 
 
 ## 4. Detect faces in the newfound images:
@@ -75,4 +75,4 @@ python detector.py
 [*] Detection complete. Found 1 faces.
 ```                                
 ### Check the result:
-![face]()
+![face](https://raw.githubusercontent.com/Zauzanov/pcap-analyzer/refs/heads/main/s02.png)
