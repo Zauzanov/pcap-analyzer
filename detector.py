@@ -1,37 +1,60 @@
-import cv2                                      # pip install opencv-python
+import cv2                                                          # pip install opencv-python.
 import os 
+import sys 
 
-ROOT = '/root/Desktop/pictures'
-FACES = '/root/Desktop/faces'
-TRAIN = '/root/Desktop/training'
+ROOT = '/home/kali/Desktop/pictures'
+FACES = '/home/kali/Desktop/faces'
+TRAIN = '/usr/share/opencv4/haarcascades'                           # On Kali, OpenCV cascades are often pre-installed here.
 
 def detect(srcdir=ROOT, tgtdir=FACES, train_dir=TRAIN):
-    for fname in os.listdir(srcdir):
-        if not fname.upper().endswith('.JPG'):
+    if not os.path.exists(tgtdir):                                  # Ensures the output directory exists
+        os.makedirs(tgtdir)
+        print(f"[*] Created target directory: {tgtdir}")
+
+    cascade_path = os.path.join(train_dir, 
+                                'haarcascade_frontalface_alt.xml')  # Verifies the Cascade file exists.
+    if not os.path.exists(cascade_path):
+        print(f"[-] Error: Cannot find {cascade_path}")
+        print("    Try: sudo apt install libopencv-dev")
+        return
+
+    face_cascade = cv2.CascadeClassifier(cascade_path)
+    found_count = 0
+
+    print(f"[*] Scanning {srcdir} for faces...")
+
+    for fname in os.listdir(srcdir):                                # Extension check.
+        if not fname.lower().endswith(('.jpg', '.jpeg', '.png')):
             continue
+
         fullname = os.path.join(srcdir, fname)
         newname = os.path.join(tgtdir, fname)
+        
         img = cv2.imread(fullname)
         if img is None:
             continue
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        training = os.path.join(train_dir,
-                                'haarcascade_frontalface_alt.xml')      # Link: https://github.com/opencv/opencv/tree/master/data/haarcascades
-        cascade = cv2.CascadeClassifier(training)
-        rects = cascade.detectMultiScale(gray, 1.3, 5)
-        try:
-            if rects.any():
-                print('Got a face')
-                rects[:, 2:] += rects[:, :2]
-        except AttributeError:
-            print(f'No face found in {fname}.')
-            continue
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)                # Converts to Grayscale for the detector.
+        
+        # Detection rules:
+        # scaleFactor=1.3: how much the image size is reduced at each image scale.
+        # minNeighbors=5: how many neighbors each candidate rectangle should have to retain it.
+        rects = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
-        # framing faces in an image
-        for x1, y1, x2, y2 in rects:
-            cv2.rectangle(img, (x1, y1), (x2, y2), (127, 255, 0), 2)
-        cv2.imwrite(newname, img)
+        if len(rects) > 0:
+            print(f" [+] Found face in {fname}!")
+            found_count += 1
+            
+            # Draws rectangles on the original image
+            for (x, y, w, h) in rects:
+                cv2.rectangle(img, (x, y), (x + w, y + h), (127, 255, 0), 2)
+            
+            # Saves the result
+            success = cv2.imwrite(newname, img)
+            if not success:
+                print(f" [!] Failed to save {newname}")
+
+    print(f"[*] Detection complete. Found {found_count} faces.")
 
 if __name__ == '__main__':
     detect()
