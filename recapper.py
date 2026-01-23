@@ -5,8 +5,8 @@ import re
 import sys
 import zlib
 
-OUTDIR = '/root/Desktop/pictures'
-PCAPS = '/root/Downloads'
+OUTDIR = '/home/kali/Desktop/pictures'
+PCAPS = '/home/kali/Downloads'
 
 Response = collections.namedtuple('Resposnse', ['header', 'payload'])
 
@@ -33,46 +33,63 @@ def extract_content(Response, content_name='image'):
     
         if 'Content-Encoding' in Response.header:
             if Response.header['Content-Encoding'] == "gzip":
-                content = zlib.decompress(Response.payload, zlib.MAX_WBITS | 32) # ATTENTION! payload or content?
+                content = zlib.decompress(content, zlib.MAX_WBITS | 32) 
             elif Response.header['Content-Encoding'] == "deflate":
-                content = zlib.decompress(Response.payload)
+                content = zlib.decompress(content)
         
     return content, content_type
 
 class Recapper:
     def __init__(self, fname):
-        pcap = rdpcap(fname)                                                    # Reads packets from a saved capture file(.pcap) into a Python program.
+        if not os.path.exists(fname):
+            print(f"[-] Error: PCAP file not found at {fname}")
+            sys.exit(1)
+        
+        print(f"[*] Reading {fname}...")
+        pcap = rdpcap(fname)
         self.sessions = pcap.sessions()
         self.responses = list()
+        print(f"[*] Found {len(self.sessions)} sessions.")
 
     def get_responses(self):
         for session in self.sessions:
             payload = b''
             for packet in self.sessions[session]:
                 try:
-                    if packet[TCP].dport == 80 or packet[TCP].sport == 80:
-                        payload += bytes(packet[TCP].payload)
-                except IndexError:
-                    sys.stdout.write('x')
-                    sys.stdout.flush
+                    if packet.haslayer(TCP) and packet.haslayer('Raw'):
+                        payload += bytes(packet.getlayer('Raw').load)
+                except Exception:
+                    continue
         
             if payload:
-                header = get_header(payload)
-                if header is None:
-                    continue
-                self.responses.append(Response(header=header, payload=payload))
+                # We search for the HTTP OK marker anywhere in the stream
+                if b'HTTP/1.1 200 OK' in payload:
+                    # Trim to start at the response
+                    payload = payload[payload.index(b'HTTP/1.1 200 OK'):]
+                    
+                    header = get_header(payload)
+                    if header:
+                        print(f" [+] Found {header.get('Content-Type')} ({len(payload)} bytes)")
+                        self.responses.append(Response(header=header, payload=payload))
+        
+        print(f"\n[*] Total valid responses identified: {len(self.responses)}")
 
     def write(self, content_name):
+        # Create directory if missing
+        if not os.path.exists(OUTDIR):
+            os.makedirs(OUTDIR, exist_ok=True)
+            print(f"[*] Created directory: {OUTDIR}")
+
         for i, response in enumerate(self.responses):
             content, content_type = extract_content(response, content_name)
             if content and content_type:
                 fname = os.path.join(OUTDIR, f'ex_{i}.{content_type}')
-                print(f'Writing {fname}')
                 with open(fname, 'wb') as f:
                     f.write(content)
+                print(f" [!] SUCCESSFULLY WROTE: {fname}")
 
 if __name__ == '__main__':
-    pfile = os.path.join(PCAPS, 'pcap.pcap')
+    pfile = os.path.join(PCAPS, 'test_images.pcap')
     recapper = Recapper(pfile)
     recapper.get_responses()
     recapper.write('image')
