@@ -8,7 +8,7 @@ import zlib
 OUTDIR = '/home/kali/Desktop/pictures'
 PCAPS = '/home/kali/Downloads'
 
-Response = collections.namedtuple('Resposnse', ['header', 'payload'])
+Response = collections.namedtuple('Response', ['header', 'payload'])
 
 def get_header(payload):
     try:
