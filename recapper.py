@@ -29,27 +29,27 @@ def get_header(payload):                                                        
 def extract_content(Response, content_name='image'):
     content, content_type = None, None                                              # If content check fails(text/html instead of an image), it allows the script safely moves to the next packet without trying to save an empty file
     if content_name in Response.header['Content-Type']:
-        content_type = Response.header['Content-Type'].split('/')[1]
-        content = Response.payload[Response.payload.index(b'\r\n\r\n')+4:]
+        content_type = Response.header['Content-Type'].split('/')[1]                # Turns 'image/jpeg' into a list: ['image', 'jpeg']. The Index: [1] picks the item at position 1: [0] is 'image'; [1] is 'jpeg'.
+        content = Response.payload[Response.payload.index(b'\r\n\r\n')+4:]          # Skips the 4 bytes of the \r\n\r\n delimiter to capture only the raw data (the image bytes).   
     
         if 'Content-Encoding' in Response.header:
             if Response.header['Content-Encoding'] == "gzip":
-                content = zlib.decompress(content, zlib.MAX_WBITS | 32) 
-            elif Response.header['Content-Encoding'] == "deflate":
+                content = zlib.decompress(content, zlib.MAX_WBITS | 32)             # A magic constant that tells zlib to automatically detect and ignore the gzip wrapper.
+            elif Response.header['Content-Encoding'] == "deflate":                  # Unzips the image on the fly.
                 content = zlib.decompress(content)
         
     return content, content_type
 
 class Recapper:
     def __init__(self, fname):
-        if not os.path.exists(fname):
+        if not os.path.exists(fname):                                               # Ensures the PCAP file exists.
             print(f"[-] Error: PCAP file not found at {fname}")
             sys.exit(1)
         
         print(f"[*] Reading {fname}...")
-        pcap = rdpcap(fname)
-        self.sessions = pcap.sessions()
-        self.responses = list()
+        pcap = rdpcap(fname)                                                        # Loads the entire PCAP file into memory to read and returns its content as a Packetlist object. Bad for large files.
+        self.sessions = pcap.sessions()                                             # Groups a list of packes into sessions. 
+        self.responses = list()                                                     # To store valid HTTP responses — images.  
         print(f"[*] Found {len(self.sessions)} sessions.")
 
     def get_responses(self):
