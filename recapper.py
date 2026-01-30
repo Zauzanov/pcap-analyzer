@@ -82,18 +82,18 @@ class Recapper:
         if not os.path.exists(OUTDIR):
             os.makedirs(OUTDIR, exist_ok=True)                                     
             print(f"[*] Created directory: {OUTDIR}")
-
+        # Turns the extracted network data into files on the hard drive:
         for i, response in enumerate(self.responses):
             content, content_type = extract_content(response, content_name)
             if content and content_type:
-                fname = os.path.join(OUTDIR, f'ex_{i}.{content_type}')
+                fname = os.path.join(OUTDIR, f'ex_{i}.{content_type}')              # Combines the directory name and the file name into a path. Gives names for every single image, inserting the extension.
                 with open(fname, 'wb') as f:
-                    f.write(content)
+                    f.write(content)                                                # Writes the extracted image bytes to the disk — from RAM onto the hard drive.
                 print(f" [!] SUCCESSFULLY WROTE: {fname}")
 
 if __name__ == '__main__':
-    pfile = os.path.join(PCAPS, 'test_images.pcap')
-    recapper = Recapper(pfile)
-    recapper.get_responses()
-    recapper.write('image')
+    pfile = os.path.join(PCAPS, 'test_images.pcap')                                 # Glues directories and filenames together correctly.
+    recapper = Recapper(pfile)                                                      # We are passing the file path into the __init__ method: it checks if the file exists, opens it with Scapy, and prepares the empty lists for our data.  
+    recapper.get_responses()                                                        # This triggers the method that loops trough all the network sessions: it finds the TCP streams, glues the Raw packets together and creates namedtuples.
+    recapper.write('image')                                                         # Goes through all the responses we found, saving the ones that are images.
 
