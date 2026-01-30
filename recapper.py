@@ -1,23 +1,24 @@
-from scapy.all import TCP, rdpcap
-import collections
+from scapy.all import TCP, rdpcap                                                   # rdpcap is the func that reads a PCAP file into memory.
+import collections                                                                  # To create a namedtuple, which make the data more readable than a list or dict.
 import os
-import re
-import sys
-import zlib
+import re                                                                           # For regular expressions: a tool for manipulating text patterns within strings. 
+import sys  
+import zlib                                                                         # Handles the decompression of HTTP traffic  that has been zipped to save bandwidth.
 
-OUTDIR = '/home/kali/Desktop/pictures'
-PCAPS = '/home/kali/Downloads'
+OUTDIR = '/home/kali/Desktop/pictures'                                              # Where the extracted images will go.
+PCAPS = '/home/kali/Downloads'                                                      # Where the source PCAP files are have to be located.
 
-Response = collections.namedtuple('Response', ['header', 'payload'])
+Response = collections.namedtuple('Response', ['header', 'payload'])                # This object represents a single HTTP response. 
 
-def get_header(payload):
+# HTTP Header extraction
+def get_header(payload):                                                            # Raw bytes to process.
     try:
-        header_raw = payload[:payload.index(b'\r\n\r\n')+2]
+        header_raw = payload[:payload.index(b'\r\n\r\n')+2]                         # Searches for the double carriage-return line-feed, which marks the end of an HTTP header and the start of the body, isolating the HTTP header from the body. 
     except ValueError:
         sys.stdout.write('-')
-        sys.stdout.flush()
+        sys.stdout.flush()                                                          # To ensure that we get real-time feedback on the screen, giving us instant visual updates.
         return None 
-    
+    # This Regular Expression transforms a block of text into a Python dictionary:
     header = dict(re.findall(r'(?P<name>.*?): (?P<value>.*?)\r\n', 
                              header_raw.decode()))
     if 'Content-Type' not in header:
