@@ -18,16 +18,16 @@ def get_header(payload):                                                        
         sys.stdout.write('-')
         sys.stdout.flush()                                                          # To ensure that we get real-time feedback on the screen, giving us instant visual updates.
         return None 
-    # This Regular Expression transforms a block of text into a Python dictionary:
+    # This Regular Expression transforms a block of text into a Python dictionary — key:value:
     header = dict(re.findall(r'(?P<name>.*?): (?P<value>.*?)\r\n', 
-                             header_raw.decode()))
+                             header_raw.decode()))                                  # Scanning all for 'Content-Type: image/jpeg' pair in an HTTP header, using the pattern. 
     if 'Content-Type' not in header:
         return None
     return header
 
-
+# Content extraction, handles HTTP body
 def extract_content(Response, content_name='image'):
-    content, content_type = None, None
+    content, content_type = None, None                                              # If content check fails(text/html instead of an image), it allows the script safely moves to the next packet without trying to save an empty file
     if content_name in Response.header['Content-Type']:
         content_type = Response.header['Content-Type'].split('/')[1]
         content = Response.payload[Response.payload.index(b'\r\n\r\n')+4:]
