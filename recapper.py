@@ -54,12 +54,12 @@ class Recapper:
 
     def get_responses(self):
         for session in self.sessions:
-            payload = b''
-            for packet in self.sessions[session]:
+            payload = b''                                                           # Inits an empty byte string for each session.
+            for packet in self.sessions[session]:                                   # Iterates through every packet in a specific TCP flow.
                 try:
-                    if packet.haslayer(TCP) and packet.haslayer('Raw'):
-                        payload += bytes(packet.getlayer('Raw').load)
-                except Exception:
+                    if packet.haslayer(TCP) and packet.haslayer('Raw'):             # Checks if the packet contains data (Raw)
+                        payload += bytes(packet.getlayer('Raw').load)               # Concatenates the data from all packets in the session into one big Binary Large Object(BLOB), storing them as a single entity.
+                except Exception:                                                   # This Try block allows to skip bad packet (empty) and keep going with the next one. 
                     continue
         
             if payload:
@@ -71,14 +71,16 @@ class Recapper:
                     header = get_header(payload)
                     if header:
                         print(f" [+] Found {header.get('Content-Type')} ({len(payload)} bytes)")
-                        self.responses.append(Response(header=header, payload=payload))
+                        self.responses.append(Response(header=header, 
+                                                       payload=payload))            # Stores the parsed header and payload in our list.
         
         print(f"\n[*] Total valid responses identified: {len(self.responses)}")
-
+    
+    # File Saver
     def write(self, content_name):
-        # Create directory if missing
+        # Creates the output directory if missing
         if not os.path.exists(OUTDIR):
-            os.makedirs(OUTDIR, exist_ok=True)
+            os.makedirs(OUTDIR, exist_ok=True)                                     
             print(f"[*] Created directory: {OUTDIR}")
 
         for i, response in enumerate(self.responses):
