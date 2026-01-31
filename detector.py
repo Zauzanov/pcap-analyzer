@@ -22,14 +22,17 @@ def detect(srcdir=ROOT, tgtdir=FACES, train_dir=TRAIN):
 
     print(f"[*] Scanning {srcdir} for faces...")
 
-    for fname in os.listdir(srcdir):                                # Extension check.
+    # Iterates through files in source directory, 
+    # one filename per iteration: 
+    for fname in os.listdir(srcdir):                                # Extension check, making the filename lowercase.
         if not fname.lower().endswith(('.jpg', '.jpeg', '.png')):
-            continue
-
-        fullname = os.path.join(srcdir, fname)
-        newname = os.path.join(tgtdir, fname)
+            continue                                                # If it does'nt end with these extenstions, skip the rest of this loop body and move to the next file. 
         
-        img = cv2.imread(fullname)
+        # Build full input and output paths
+        fullname = os.path.join(srcdir, fname)                      # full path to the source image.
+        newname = os.path.join(tgtdir, fname)                       # full path where output will be written using the same filename.
+        
+        img = cv2.imread(fullname)                                  # Reads the image file at fullname.
         if img is None:
             continue
 
@@ -40,6 +43,7 @@ def detect(srcdir=ROOT, tgtdir=FACES, train_dir=TRAIN):
         # minNeighbors=5: how many neighbors each candidate rectangle should have to retain it.
         rects = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
 
+        # If any faces found in this image
         if len(rects) > 0:
             print(f" [+] Found face in {fname}!")
             found_count += 1
@@ -47,8 +51,11 @@ def detect(srcdir=ROOT, tgtdir=FACES, train_dir=TRAIN):
             # Draws rectangles on the original image
             for (x, y, w, h) in rects:
                 cv2.rectangle(img, (x, y), (x + w, y + h), (127, 255, 0), 2)
+                # Edit:
+                # color = (127, 255, 0) in BGR order: That is: Blue=127, Green=255, Red=0 (a bright green line);
+                # thickness = 2 means 2 pixels wide: If thickness were -1, it would fill the rectangle.
             
-            # Saves the result
+            # Saves the modified image:
             success = cv2.imwrite(newname, img)
             if not success:
                 print(f" [!] Failed to save {newname}")
