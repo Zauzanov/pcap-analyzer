@@ -1,10 +1,9 @@
 import cv2                                                          # pip install opencv-python.
-import os 
-import sys 
+import os  
 
-ROOT = '/home/kali/Desktop/pictures'
-FACES = '/home/kali/Desktop/faces'
-TRAIN = '/usr/share/opencv4/haarcascades'                           # On Kali, OpenCV cascades are often pre-installed here.
+ROOT = '/home/kali/Desktop/pictures'                                # Source dir containing images to scan.
+FACES = '/home/kali/Desktop/faces'                                  # Target output directory where annotated images get saved.
+TRAIN = '/usr/share/opencv4/haarcascades'                           # Dir for Haar cascade XML files. On Kali, OpenCV cascades are often pre-installed here.
 
 def detect(srcdir=ROOT, tgtdir=FACES, train_dir=TRAIN):
     if not os.path.exists(tgtdir):                                  # Ensures the output directory exists
@@ -12,14 +11,14 @@ def detect(srcdir=ROOT, tgtdir=FACES, train_dir=TRAIN):
         print(f"[*] Created target directory: {tgtdir}")
 
     cascade_path = os.path.join(train_dir, 
-                                'haarcascade_frontalface_alt.xml')  # Verifies the Cascade file exists.
+                                'haarcascade_frontalface_alt.xml')  # Builds a path using the OS-specific separator, verifying the Cascade file exists.
     if not os.path.exists(cascade_path):
         print(f"[-] Error: Cannot find {cascade_path}")
         print("    Try: sudo apt install libopencv-dev")
         return
 
-    face_cascade = cv2.CascadeClassifier(cascade_path)
-    found_count = 0
+    face_cascade = cv2.CascadeClassifier(cascade_path)              # Initializes the classifier and loads a pre-trained model.
+    found_count = 0                                                 # Initializes a counter.
 
     print(f"[*] Scanning {srcdir} for faces...")
 
